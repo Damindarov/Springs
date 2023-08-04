@@ -49,7 +49,7 @@ This project is meant to be a CPP version of this Python_Project[https://github.
 
     1.  
         ```shell
-        git clone https://github.com/jbeder/yaml-cpp.git
+      https://github.com/jbeder/yaml-cpp/archive/refs/tags/yaml-cpp-0.6.0.zip
        ```
     2. 
         ```shell
