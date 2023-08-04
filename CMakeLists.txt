@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
 project(Springs LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 
 # The options need to be the same as Open3D's default
 # If Open3D is configured and built with custom options, you'll also need to
@@ -14,11 +18,19 @@ else()
 endif()
 
 # Path to Open3D, if installed in a non-standard location
-list(APPEND CMAKE_PREFIX_PATH "D:\\open3d_install")
-list(APPEND CMAKE_PREFIX_PATH "D:\\Проекты\\YAML_CPP")
+
+list(APPEND CMAKE_PREFIX_PATH "C:\\Users\\syedj\\Documents\\open3d_install")
 
 find_package(Open3D REQUIRED)
-find_package(yaml-cpp REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(NumCpp REQUIRED)
+
+#list(APPEND CMAKE_PREFIX_PATH "D:\\open3d_install")
+#list(APPEND CMAKE_PREFIX_PATH "D:\\Проекты\\YAML_CPP")
+
+#find_package(Open3D REQUIRED)
+#find_package(yaml-cpp REQUIRED)
+
 
 # find_package(Eigen REQUIRED)
 # include_directories(${Eigen_INCLUDE_DIRS})
@@ -36,14 +48,21 @@ add_executable(Springs main_ply_load.cpp
         include/utilities.h
         include/chopping.h
         include/c_interface.h
+        include/NumCpp.hpp
         src/filtration.cpp
         src/clusterization.cpp
         src/spring_recognition.cpp
         src/utilities.cpp
         src/chopping.cpp)
+        
+message(${Boost_LIBRARIES})
+file(GLOB LIB_FILES "C:/local/boost_1_82_0/lib64-msvc-14.3/*.lib")
+target_include_directories(Springs PRIVATE ${Boost_INCLUDE_DIRS})
+# C:\\local\\boost_1_82_0\\lib64-msvc-14.3\\libboost_log-vc143-mt-s-x64-1_82.lib C:\\local\\boost_1_82_0\\lib64-msvc-14.3\\libboost_filesystem-vc143-mt-s-x64-1_82.lib
+target_link_libraries(Springs PRIVATE Open3D::Open3D ${Boost_LIBRARIES} ${LIB_FILES} NumCpp::NumCpp C:\\Users\\syedj\\Documents\\Springs\\RfSpringVisionSystemLib.lib)
 
-target_link_libraries(Springs PRIVATE Open3D::Open3D D:\\Проекты\\Springs\\RfSpringVisionSystemLib.lib)
-target_link_libraries(Springs PRIVATE D:\\Проекты\\YAML_CPP\\lib\\yaml-cpp.lib)
+#target_link_libraries(Springs PRIVATE Open3D::Open3D D:\\Проекты\\Springs\\RfSpringVisionSystemLib.lib)
+#target_link_libraries(Springs PRIVATE D:\\Проекты\\YAML_CPP\\lib\\yaml-cpp.lib)
 
 #find_package(Open3D REQUIRED)
 #target_link_libraries(Springs lib/Open3D.lib)
