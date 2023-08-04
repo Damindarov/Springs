@@ -41,11 +41,29 @@ This project is meant to be a CPP version of this Python_Project[https://github.
         ```
      5. ```shell
             cd ..
-            cp -r .\include\* D:\Springs\include\
+            cp -r .\include\* <path_to_springs_include_folder>
         ```   
 
 
 3. Yaml-cpp[www.google.com] (To be installed and integrated)
+
+    1.  
+        ```shell
+        git clone https://github.com/jbeder/yaml-cpp.git
+       ```
+    2. 
+        ```shell
+        cd yaml-cpp
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX="your_open3d_install_folder_location>\yaml-cpp_install" ..
+        cmake --build . --target install
+       ```
+    3.
+      ```shell
+        cd ../..
+        cd yaml-cpp_install/include/* <path_to_springs_include_folder>
+       ```
 
 
 ### How to Run
