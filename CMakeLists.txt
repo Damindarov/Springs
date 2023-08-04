@@ -18,11 +18,19 @@ else()
 endif()
 
 # Path to Open3D, if installed in a non-standard location
+
 list(APPEND CMAKE_PREFIX_PATH "C:\\Users\\syedj\\Documents\\open3d_install")
 
 find_package(Open3D REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options)
 find_package(NumCpp REQUIRED)
+
+#list(APPEND CMAKE_PREFIX_PATH "D:\\open3d_install")
+#list(APPEND CMAKE_PREFIX_PATH "D:\\Проекты\\YAML_CPP")
+
+#find_package(Open3D REQUIRED)
+#find_package(yaml-cpp REQUIRED)
+
 
 # find_package(Eigen REQUIRED)
 # include_directories(${Eigen_INCLUDE_DIRS})
@@ -33,7 +41,7 @@ include_directories(include)
 
 # add_executable(Springs)
 # target_sources(Springs PRIVATE main.cpp)
-add_executable(Springs main.cpp
+add_executable(Springs main_ply_load.cpp
         include/filtration.h
         include/clusterization.h
         include/spring_recognition.h
@@ -46,11 +54,16 @@ add_executable(Springs main.cpp
         src/spring_recognition.cpp
         src/utilities.cpp
         src/chopping.cpp)
+        
 message(${Boost_LIBRARIES})
 file(GLOB LIB_FILES "C:/local/boost_1_82_0/lib64-msvc-14.3/*.lib")
 target_include_directories(Springs PRIVATE ${Boost_INCLUDE_DIRS})
 # C:\\local\\boost_1_82_0\\lib64-msvc-14.3\\libboost_log-vc143-mt-s-x64-1_82.lib C:\\local\\boost_1_82_0\\lib64-msvc-14.3\\libboost_filesystem-vc143-mt-s-x64-1_82.lib
 target_link_libraries(Springs PRIVATE Open3D::Open3D ${Boost_LIBRARIES} ${LIB_FILES} NumCpp::NumCpp C:\\Users\\syedj\\Documents\\Springs\\RfSpringVisionSystemLib.lib)
+
+#target_link_libraries(Springs PRIVATE Open3D::Open3D D:\\Проекты\\Springs\\RfSpringVisionSystemLib.lib)
+#target_link_libraries(Springs PRIVATE D:\\Проекты\\YAML_CPP\\lib\\yaml-cpp.lib)
+
 #find_package(Open3D REQUIRED)
 #target_link_libraries(Springs lib/Open3D.lib)
 
