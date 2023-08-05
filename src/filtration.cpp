@@ -19,3 +19,11 @@ std::shared_ptr<open3d::geometry::PointCloud> filtration(std::shared_ptr<open3d:
     return filtered_cloud;
 
 }
+
+std::shared_ptr<open3d::geometry::PointCloud> filtration_ang(std::shared_ptr<open3d::geometry::PointCloud> cloud) {
+
+    auto filtered_cloud = std::get<0>(cloud->RemoveRadiusOutliers(20, 2.8, false));
+
+    return filtered_cloud;
+
+}

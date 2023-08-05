@@ -24,15 +24,18 @@ else()
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 endif()
 
-
 # Path to Open3D, if installed in a non-standard location
 list(APPEND CMAKE_PREFIX_PATH "${DIR_ONE_ABOVE}\\open3d_install")
 list(APPEND CMAKE_PREFIX_PATH "${DIR_ONE_ABOVE}\\YAML_CPP")
 
+
 find_package(Open3D REQUIRED)
 find_package(Boost REQUIRED  COMPONENTS program_options)
 find_package(NumCpp REQUIRED)
+
+
 find_package(yaml-cpp REQUIRED)
+
 
 # find_package(Eigen REQUIRED)
 # include_directories(${Eigen_INCLUDE_DIRS})
@@ -43,6 +46,7 @@ include_directories(include)
 
 # add_executable(Springs)
 # target_sources(Springs PRIVATE main.cpp)
+
 add_executable(Springs main.cpp
         include/filtration.h
         include/clusterization.h
@@ -62,6 +66,7 @@ file(GLOB LIB_FILES "C:/local/boost_1_82_0/lib64-msvc-14.3/*.lib")
 target_include_directories(Springs PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(Springs PRIVATE Open3D::Open3D ${Boost_LIBRARIES} ${LIB_FILES} NumCpp::NumCpp ${DIR_ONE_ABOVE}/Springs/libs/yaml-cpp.lib ${DIR_ONE_ABOVE}/Springs/libs/RfSpringVisionSystemLib.lib)
 # target_link_libraries(Springs PRIVATE  C:\\Users\\syedj\\Documents\\Springs\\yaml-cpp.lib)
+
 #find_package(Open3D REQUIRED)
 #target_link_libraries(Springs lib/Open3D.lib)
 
