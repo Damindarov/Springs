@@ -6,7 +6,9 @@
 #ifndef SPRINGS_UTILITIES_H
 #define SPRINGS_UTILITIES_H
 
-#endif //SPRINGS_UTILITIES_H
+
 
 
 void printMessage(const char * message);
+
+#endif //SPRINGS_UTILITIES_H

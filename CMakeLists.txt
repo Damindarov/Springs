@@ -3,6 +3,7 @@ project(Springs LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
+
 # The options need to be the same as Open3D's default
 # If Open3D is configured and built with custom options, you'll also need to
 # specify the same custom options.
@@ -29,6 +30,7 @@ include_directories(include)
 
 # add_executable(Springs)
 # target_sources(Springs PRIVATE main.cpp)
+
 add_executable(Springs main_server.cpp
         include/filtration.h
         include/clusterization.h
@@ -36,16 +38,18 @@ add_executable(Springs main_server.cpp
         include/utilities.h
         include/chopping.h
         include/c_interface.h
+        include/server.h
         src/filtration.cpp
         src/clusterization.cpp
         src/spring_recognition.cpp
         src/utilities.cpp
-        src/chopping.cpp)
+        src/chopping.cpp
+        src/server.cpp)
 
 target_link_libraries(Springs PRIVATE Open3D::Open3D D:\\Проекты\\Springs\\RfSpringVisionSystemLib.lib)
 target_link_libraries(Springs PRIVATE D:\\Проекты\\YAML_CPP\\lib\\yaml-cpp.lib)
 target_link_libraries(Springs PRIVATE D:\\Microsoft\\SDK\\Lib\\x64\\msmpi.lib)
-
+# target_link_libraries(Springs PRIVATE ws2_32)
 #find_package(Open3D REQUIRED)
 #target_link_libraries(Springs lib/Open3D.lib)
 
@@ -60,3 +64,4 @@ if(WIN32)
                 ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>)
     endif()
 endif()
+
