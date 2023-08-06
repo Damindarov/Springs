@@ -5,10 +5,19 @@
 
 #ifndef SPRINGS_UTILITIES_H
 #define SPRINGS_UTILITIES_H
-
-
-
+#include <float.h>
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include "open3d/Open3D.h"
 
 void printMessage(const char * message);
 
+Eigen::Matrix4d getTransformationMatrix(float angle);
+std::shared_ptr<open3d::geometry::LineSet> getBoxCloud(open3d::geometry::AxisAlignedBoundingBox aabb);
+std::shared_ptr<open3d::geometry::LineSet> getBoxCloud(open3d::geometry::OrientedBoundingBox obb);
+open3d::geometry::AxisAlignedBoundingBox getMinMaxBounds(const open3d::geometry::OrientedBoundingBox& obb);
+
 #endif //SPRINGS_UTILITIES_H
+
+
+
