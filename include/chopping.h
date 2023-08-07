@@ -9,6 +9,7 @@
 
 #include "open3d/Open3D.h"
 
-std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping(std::shared_ptr<open3d::geometry::PointCloud>);
+
+std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping(std::shared_ptr<open3d::geometry::PointCloud>, bool);
 
 #endif //SPRINGS_CHOPPING_H

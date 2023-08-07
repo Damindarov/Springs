@@ -1,162 +1,82 @@
 //
 // Created by PC on 8/3/2023.
 //
+#include <iostream>
 #include "open3d/Open3D.h"
 #include "utilities.h"
 #include <Eigen/Dense>
 #include <Eigen/Core>
+#include <chrono>
+#include <ctime> 
 #define _USE_MATH_DEFINES
 #include <math.h>
+using namespace std::chrono;
+using namespace std;
+#define TOP_HEIGHT 400.0
+#define BASE_HEIGHT 1040.0
+#define CUT_WIDTH 100.0
 
-#define TOP_HEIGHT 400
-#define BASE_HEIGHT 1040
-#define CUT_WIDTH 100
 
-std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping(std::shared_ptr<open3d::geometry::PointCloud> cloud)
+std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping(std::shared_ptr<open3d::geometry::PointCloud> cloud, bool first_run)
 {
 
+    auto t1 = high_resolution_clock::now();
+    
+    //filtration1
     auto filtered_cloud = std::get<0>(cloud->RemoveStatisticalOutliers(10, 0.0000001, false));
 
-    auto aabb = filtered_cloud->GetAxisAlignedBoundingBox();
-
     auto box = std::make_shared<open3d::geometry::LineSet>();
-    box = getBoxCloud(aabb);
-
-    // std::cout << "Box points" << aabb.GetMinBound() << aabb.GetMaxBound() << std::endl;
-
-    // for(auto point : box_points){
-    //     std::cout << point << std::endl;
-    // }
+    auto box2 = std::make_shared<open3d::geometry::LineSet>();
 
     auto bbox = filtered_cloud->GetAxisAlignedBoundingBox();
 
+    //cut the small culsters from top
     Eigen::Vector3d min_bound0 = bbox.GetMinBound() + Eigen::Vector3d(0, 0, 50);
     Eigen::Vector3d max_bound0 = bbox.GetMaxBound() - Eigen::Vector3d(0, 0, 0);
 
     // Then, construct the AABB using these bounds
-    open3d::geometry::AxisAlignedBoundingBox bbox1(min_bound0, max_bound0);
+    open3d::geometry::AxisAlignedBoundingBox crop_top_box(min_bound0, max_bound0);
 
-    filtered_cloud = filtered_cloud->Crop(bbox1);
+    filtered_cloud = filtered_cloud->Crop(crop_top_box);
 
+    //filtration 2
     filtered_cloud = std::get<0>(filtered_cloud->RemoveStatisticalOutliers(10, 0.0001, false));
 
-    Eigen::Matrix4d transformation;
+    //actual bounding box
+    auto obb5 = filtered_cloud->GetMinimalOrientedBoundingBox(true);
+    box = getBoxCloud(obb5);
 
-    open3d::visualization::DrawGeometries({filtered_cloud, box}, "filtered cloud before transformation");
+    auto center5 = obb5.center_;
+    Eigen::Matrix3d rotation5 = obb5.R_;
+    auto extent5 = obb5.extent_;
 
-    // std::cout << "Transformation matrix for " << degrees << " degrees:\n" << rotation_matrix << std::endl;
-    // std::cout << "aabb" << aabb.GetMinBound()[0] << std::endl;
+    // open3d::visualization::DrawGeometries({filtered_cloud, box}, "filtered cloud before transformation");
 
-    if (static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) > 3.0)
-    {
-        std::cout << "greater" << std::endl;
-        std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-        auto transform_pcd = std::make_shared<open3d::geometry::PointCloud>();
-        for (float i = 0; i < 10; i += 0.01)
-        {
-            // std::cout << i << std::endl;
-            // std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-            transformation = getTransformationMatrix(i);
-            transform_pcd = filtered_cloud;
-            transform_pcd->Transform(transformation);
-            auto aabb = transform_pcd->GetAxisAlignedBoundingBox();
-            std::cout << "Min bound: " << aabb.GetMinBound() << "\n"
-                      << "Max bound: " << aabb.GetMaxBound() << std::endl;
-            // get the least error in the angle
-            if (static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) > -3.0 && static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) < 3.0)
-            {
-                std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-                std::cout << "done" << std::endl;
-                transformation = getTransformationMatrix(i / 2);
-                break;
-            }
-        }
-    }
+    Eigen::Vector3d min_bound5 = center5 - extent5 / 2.0;
+    Eigen::Vector3d max_bound5 = center5 + extent5 / 2.0;
 
-    else if (static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) < 3.0)
-    {
-        std::cout << "less" << std::endl;
-        std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-        auto transform_pcd = std::make_shared<open3d::geometry::PointCloud>();
-        for (float i = 0; i > -10; i -= 0.01)
-        {
-            // std::cout << i << std::endl;
-            // std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-            transformation = getTransformationMatrix(i);
-            transform_pcd = filtered_cloud;
-            transform_pcd->Transform(transformation);
-            auto aabb = transform_pcd->GetAxisAlignedBoundingBox();
-            // std::cout << "here is the error" << std::endl;
-            std::cout << "Min bound: " << aabb.GetMinBound() << "\n" << "Max bound: " << aabb.GetMaxBound() << std::endl;
-            // get the least error in the angle
-            if (static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) > -3.0 && static_cast<double>(std::abs(aabb.GetMinBound()[1])) - static_cast<double>(std::abs(aabb.GetMaxBound()[1])) < 3.0)
-            {
-                std::cout << std::abs(aabb.GetMinBound()[1]) - std::abs(aabb.GetMaxBound()[1]) << std::endl;
-                std::cout << "done" << std::endl;
-                std::cout << "i = " << i << std::endl;
-                transformation = getTransformationMatrix(i/2);
-                break;
-            }
-        }
-    }
+    float y1 = (min_bound5[2] - TOP_HEIGHT) * (CUT_WIDTH / (BASE_HEIGHT - TOP_HEIGHT));
+    float y2 = (max_bound5[2] - TOP_HEIGHT) * (CUT_WIDTH / (BASE_HEIGHT - TOP_HEIGHT));
 
-    // std::cout << "Final Transformation matrix " << rotation_matrix << std::endl;
-    Eigen::Matrix3d rotation = transformation.block<3,3>(0,0);
-    Eigen::Vector3d center_of_rotation = aabb.GetCenter();
-    filtered_cloud->Rotate(rotation, center_of_rotation);
-    auto aabb2 = filtered_cloud->GetAxisAlignedBoundingBox();
-    // Convert to OrientedBoundingBox
-    open3d::geometry::OrientedBoundingBox obb = open3d::geometry::OrientedBoundingBox::CreateFromAxisAlignedBoundingBox(aabb);
-    obb.Rotate(rotation, center_of_rotation);
-    // obb.Transform(transformation);
-    box = getBoxCloud(obb);
+    std::cout << "y1, y2 " << y1 << " " << y2 << std::endl;\
 
-    std::cout << "obb center =" << obb.center_ << std::endl;
-    
-    // aabb = obb.GetAxisAlignedBoundingBox();
-    // box = getBoxCloud(aabb);
+    Eigen::Vector3d min_bound_new = min_bound5 + Eigen::Vector3d(0, y1, 0);
+    Eigen::Vector3d max_bound_new = max_bound5 - Eigen::Vector3d(0, y2, 0);
 
-    // box->Transform(transformation);
-    open3d::visualization::DrawGeometries({filtered_cloud, box}, "filtered cloud after transformation");
+    Eigen::Vector3d center_new = (min_bound_new + max_bound_new) / 2.0;
+    Eigen::Vector3d extent_new = max_bound_new - min_bound_new;
 
-    float y1 = (obb.GetMinBound()[2] - TOP_HEIGHT) * (CUT_WIDTH / (BASE_HEIGHT - TOP_HEIGHT));
-    float y2 = (obb.GetMaxBound()[2] - TOP_HEIGHT) * (CUT_WIDTH / (BASE_HEIGHT - TOP_HEIGHT));
+    open3d::geometry::OrientedBoundingBox obb_new(center_new, obb5.R_, extent_new);
 
-    Eigen::Vector3d min_bound = obb.GetMinBound(); //+ Eigen::Vector3d(0, -350, 0);    //-400
-    Eigen::Vector3d max_bound = obb.GetMaxBound(); //- Eigen::Vector3d(0, 600, 0);     //500
-    std::cout << "y1, y2 " << y1 << " " << y2 << std::endl;
-    std::cout << "obb min" << std::endl << obb.GetMinBound()[1] << std::endl;
-    std::cout << "obb max" << std::endl << obb.GetMaxBound()[1] << std::endl;
+    auto chopped_cloud = std::make_shared<open3d::geometry::PointCloud>();
+    chopped_cloud = cloud->Crop(obb_new);
+    box2 = getBoxCloud(obb_new);
 
-    // Calculate the center of the box
-    Eigen::Vector3d center = (min_bound + max_bound) / 2.0;
+    auto t2 = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t2 - t1);
+    std::cout << "Choping t2-t1 " << duration.count() << "\n";
 
-    //TODO: Adjust the formula for z change
-    min_bound = obb.GetMinBound() + Eigen::Vector3d(0, -350, 0);    //-400 
-    max_bound = obb.GetMaxBound() - Eigen::Vector3d(0, 600, 0);     //500
+    // open3d::visualization::DrawGeometries({chopped_cloud, box, box2}, "Point Cloud Visualization");
 
-    // Calculate the extent of the box
-    Eigen::Vector3d extent = max_bound - min_bound;
-
-    // Create the OrientedBoundingBox
-    open3d::geometry::OrientedBoundingBox obb2(obb.center_, obb.R_, extent);
-
-    open3d::geometry::OrientedBoundingBox obb3(center, obb.R_, extent);
-
-    // Then, construct the AABB using these bounds
-    open3d::geometry::AxisAlignedBoundingBox aabb3(min_bound, max_bound);
-    // open3d::geometry::OrientedBoundingBox obb2()
-    cloud->Rotate(obb.R_, obb.center_);
-    open3d::visualization::DrawGeometries({cloud, box}, "Point Cloud Visualization");
-    auto p2 = std::make_shared<open3d::geometry::PointCloud>();
-    auto p3 = std::make_shared<open3d::geometry::PointCloud>();
-    p2 = cloud->Crop(obb2);
-    p3 = filtered_cloud->Crop(obb2);
-
-    box = getBoxCloud(obb2);
-
-    std::cout << "Transformation matrix" << std::endl << transformation << std::endl;
-    open3d::visualization::DrawGeometries({p3, box}, "Point Cloud Visualization");
-
-    return p3;
+    return chopped_cloud;
 }
