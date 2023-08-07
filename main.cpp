@@ -5,18 +5,18 @@
 #include "c_interface.h"
 #include <chrono>
 #include <ctime> 
-#include "NumCpp.hpp"
+// #include "NumCpp.hpp"
 
 int main() {
 
     printMessage("Hey its working!!!!....");
 
-    // Example usage of NumCpp
-    nc::NdArray<double> arr1 = {1, 2, 3, 4, 5};
-    nc::NdArray<double> arr2 = {6, 7, 8, 9, 10};
-    nc::NdArray<double> result = nc::multiply(arr1, arr2);
+    // // Example usage of NumCpp
+    // nc::NdArray<double> arr1 = {1, 2, 3, 4, 5};
+    // nc::NdArray<double> arr2 = {6, 7, 8, 9, 10};
+    // nc::NdArray<double> result = nc::multiply(arr1, arr2);
 
-    std::cout << "Result: " << result << std::endl;
+    // std::cout << "Result: " << result << std::endl;
     
     //  // Create a point cloud
     // auto cloud = std::make_shared<open3d::geometry::PointCloud>();
