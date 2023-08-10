@@ -1,11 +1,12 @@
+#define NOMINMAX
+#include "server.h"
 #include <time.h>
 #include <iostream>
 #include <set>
 #include "open3d/Open3D.h"
 #include <chrono>
 #include "c_interface.h"
-#include "mpi.h"
-#include "omp.h"
+#include "yaml-cpp/yaml.h"
 // #include "omp.h"
 using namespace std::chrono;
 using namespace std;
@@ -18,18 +19,44 @@ using namespace std;
 #define CLUSTERIZATION_EPS 2.41
 #define CLUSTERIZAION_MIN_POINTS 5
 #define CLUSTER_DELETE_THRESHOLD 100
-
+bool terminateThread = false;
+char recvbuf[1024];
+std::mutex mtx;
 int main() {
-
+    std::thread serverThread(server);
+    serverThread.detach();
+    std::string recvd_str;
      // Create a point cloud
-    auto cloud = std::make_shared<open3d::geometry::PointCloud>();
-    // MPI_Init(NULL, NULL);
-    if (open3d::io::ReadPointCloud("point_cloud.ply", *cloud)) {
-        std::cout << "Successfully read the point cloud file." << std::endl;
-    } else {
-        std::cout << "Failed to read the point cloud file." << std::endl;
-        return 1;
+    YAML::Node config = YAML::LoadFile("springs_params_.yaml");
+    std::cout << "Last logged in: " <<config["CORE_PARAMS"]<< "\n";
+    if (config["CORE_PARAMS"]) {
+         std::cout << "Last logged in: " <<config["CORE_PARAMS"]["RIGHT_Y"]<< "\n";
     }
+     // Create a point cloud
+    // auto cloud = std::make_shared<open3d::geometry::PointCloud>();
+
+    // Read the point cloud data from a PLY file
+    // if (open3d::io::ReadPointCloud("point_cloud.ply", *cloud)) {
+    //     std::cout << "Successfully read the point cloud file." << std::endl;
+    // } else {
+    //     std::cout << "Failed to read the point cloud file." << std::endl;
+    //     return 1;
+    // }
+
+    // // Visualize the point cloud
+    // open3d::visualization::DrawGeometries({cloud}, "Point Cloud Visualization");
+
+
+
+
+    // auto cloud = std::make_shared<open3d::geometry::PointCloud>();
+    // // MPI_Init(NULL, NULL);
+    // if (open3d::io::ReadPointCloud("point_cloud.ply", *cloud)) {
+    //     std::cout << "Successfully read the point cloud file." << std::endl;
+    // } else {
+    //     std::cout << "Failed to read the point cloud file." << std::endl;
+    //     return 1;
+    // }
 
     // // Visualize the point cloud
     // // open3d::visualization::DrawGeometries({cloud}, "Point Cloud Visualization");
@@ -112,63 +139,63 @@ int main() {
 
     
     
-    //==============================Filtration==============================================
-    auto one = high_resolution_clock::now();
-    auto semi_filtered_cloud = std::get<0>(cloud->RemoveStatisticalOutliers(NB_NEIGHBOURS, STD_RATIO, false));
+    // //==============================Filtration==============================================
+    // auto one = high_resolution_clock::now();
+    // auto semi_filtered_cloud = std::get<0>(cloud->RemoveStatisticalOutliers(NB_NEIGHBOURS, STD_RATIO, false));
 
-    auto filtered_cloud = std::get<0>(semi_filtered_cloud->RemoveStatisticalOutliers(NB_NEIGHBOURS, STD_RATIO, false));
+    // auto filtered_cloud = std::get<0>(semi_filtered_cloud->RemoveStatisticalOutliers(NB_NEIGHBOURS, STD_RATIO, false));
 
-    auto two = high_resolution_clock::now();
+    // auto two = high_resolution_clock::now();
 
-    auto duration = duration_cast<milliseconds>(two - one);
-    std::cout << "Filtration: " << duration.count() << "\n";
+    // auto duration = duration_cast<milliseconds>(two - one);
+    // std::cout << "Filtration: " << duration.count() << "\n";
 
-    // //================================Clusterization================================================
-    auto labels = filtered_cloud->ClusterDBSCAN(CLUSTERIZATION_EPS, CLUSTERIZAION_MIN_POINTS);
+    // // //================================Clusterization================================================
+    // auto labels = filtered_cloud->ClusterDBSCAN(CLUSTERIZATION_EPS, CLUSTERIZAION_MIN_POINTS);
 
-    auto three = high_resolution_clock::now();
+    // auto three = high_resolution_clock::now();
     
-    duration = duration_cast<milliseconds>(three - two);
+    // duration = duration_cast<milliseconds>(three - two);
 
-    std::cout << "Clusterization: " << duration.count() << "\n";
+    // std::cout << "Clusterization: " << duration.count() << "\n";
 
-    auto unique_labels = std::set<int>(labels.begin(), labels.end());
-    int number_of_clusters = unique_labels.size();
+    // auto unique_labels = std::set<int>(labels.begin(), labels.end());
+    // int number_of_clusters = unique_labels.size();
 
-    std::vector<std::shared_ptr<const open3d::geometry::PointCloud>> clusters;
+    // std::vector<std::shared_ptr<const open3d::geometry::PointCloud>> clusters;
 
-    for (int i = 0; i < number_of_clusters; i++) {
+    // for (int i = 0; i < number_of_clusters; i++) {
 
-        double red = (double)std::rand()/(double)RAND_MAX;
-        double green = (double)std::rand()/(double)RAND_MAX;
-        double blue = (double)std::rand()/(double)RAND_MAX;
+    //     double red = (double)std::rand()/(double)RAND_MAX;
+    //     double green = (double)std::rand()/(double)RAND_MAX;
+    //     double blue = (double)std::rand()/(double)RAND_MAX;
 
-        auto color = Eigen::Vector3d(red, green, blue);
+    //     auto color = Eigen::Vector3d(red, green, blue);
 
-        auto cluster = std::make_shared<open3d::geometry::PointCloud>();
-        for (int j = 0; j < labels.size(); j ++) {
-            if (labels.at(j) == i) {
-                cluster->points_.push_back(filtered_cloud->points_.at(j));
-                cluster->colors_.push_back(color);
-            }
-        }
-        clusters.push_back(cluster);
-    }
+    //     auto cluster = std::make_shared<open3d::geometry::PointCloud>();
+    //     for (int j = 0; j < labels.size(); j ++) {
+    //         if (labels.at(j) == i) {
+    //             cluster->points_.push_back(filtered_cloud->points_.at(j));
+    //             cluster->colors_.push_back(color);
+    //         }
+    //     }
+    //     clusters.push_back(cluster);
+    // }
 
-    auto good_clusters = std::vector<std::shared_ptr<const open3d::geometry::Geometry>>();
+    // auto good_clusters = std::vector<std::shared_ptr<const open3d::geometry::Geometry>>();
 
-    for (int i = 0; i < clusters.size(); i++) {
-        if (clusters.at(i)->points_.size() > CLUSTER_DELETE_THRESHOLD) {
-            good_clusters.push_back(clusters.at(i));
-        }
-    }
+    // for (int i = 0; i < clusters.size(); i++) {
+    //     if (clusters.at(i)->points_.size() > CLUSTER_DELETE_THRESHOLD) {
+    //         good_clusters.push_back(clusters.at(i));
+    //     }
+    // }
 
-    std::cout << good_clusters.size();
+    // std::cout << good_clusters.size();
 
-    //==============================Visualization======================================
+    // //==============================Visualization======================================
 
-    const auto vector = good_clusters;
-    open3d::visualization::DrawGeometries(vector, "Point Cloud Visualization");
+    // const auto vector = good_clusters;
+    // open3d::visualization::DrawGeometries(vector, "Point Cloud Visualization");
 
     return 0;
 }

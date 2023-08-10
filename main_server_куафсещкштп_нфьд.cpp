@@ -105,6 +105,7 @@
 #include "server.h"
 #include <typeinfo>
 #include <thread>
+#include "yaml-cpp/yaml.h"
 // #include "filtration.h"
 
 // #pragma comment(lib, "ws2_32.lib")
@@ -159,6 +160,11 @@ int main() {
         if (recvd_str[2] == '2' && station_server != 7 && station_server != 8)
         {   
             auto t1 = high_resolution_clock::now();
+            // YAML::Node config = YAML::LoadFile("springs_params_.yaml");
+
+
+
+
             auto cloud = std::make_shared<open3d::geometry::PointCloud>();
             if (station_server == 7)
                 continue;
@@ -236,7 +242,7 @@ int main() {
                 if(clusters1.size() == 0){
                     cout<<"Maybe frame is empty"<<endl;
                     double mean = 0;
-                    for(int i = 0; i < chopped_point_cloud1.points_(); i++){
+                    for(int i = 0; i < chopped_point_cloud1->points_(); i++){
                         mean += chopped_point_cloud1.points_()[2];
                     }
                     mean = mean / chopped_point_cloud1->points_.size();

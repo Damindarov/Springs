@@ -31,7 +31,7 @@ include_directories(include)
 # add_executable(Springs)
 # target_sources(Springs PRIVATE main.cpp)
 
-add_executable(Springs main_server.cpp
+add_executable(Springs main_ply_load.cpp
         include/filtration.h
         include/clusterization.h
         include/spring_recognition.h
@@ -44,7 +44,8 @@ add_executable(Springs main_server.cpp
         src/spring_recognition.cpp
         src/utilities.cpp
         src/chopping.cpp
-        src/server.cpp)
+        src/server.cpp
+        )
 
 target_link_libraries(Springs PRIVATE Open3D::Open3D D:\\Проекты\\Springs\\RfSpringVisionSystemLib.lib)
 target_link_libraries(Springs PRIVATE D:\\Проекты\\YAML_CPP\\lib\\yaml-cpp.lib)

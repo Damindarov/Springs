@@ -38,6 +38,7 @@ std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusterization(std::s
 
     for (int i = 0; i < clusters.size(); i++) {
         if (clusters.at(i)->points_.size() > CLUSTER_DELETE_THRESHOLD) {
+            auto bb = clusters.at(i)->GetOrientedBoundingBox().GetMaxBound();
             good_clusters.push_back(clusters.at(i));
         }
     }
