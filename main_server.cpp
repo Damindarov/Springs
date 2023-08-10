@@ -118,16 +118,15 @@ int main()
             if(config["VIEW_PARAMS"]["CHOPPING"].as<bool>())
                 open3d::visualization::DrawGeometries({chopped_cloud}, "Chopped Visualization");
             
-            for (int i = 0; i < chopped_cloud->points_.size(); ++i)
-            {
+            for (int i = 0; i < chopped_cloud->points_.size(); ++i){
                 chopped_cloud_prime->points_.push_back(Eigen::Vector3d(-chopped_cloud->points_[i][0] + config["CALIBRATION_PARAMS"]["DX"].as<double>(), chopped_cloud->points_[i][1] + config["CALIBRATION_PARAMS"]["DY"].as<double>(), -chopped_cloud->points_[i][2] + config["CALIBRATION_PARAMS"]["DZ"].as<double>()));
-                // chopped_cloud_prime->points_.push_back(Eigen::Vector3d(chopped_cloud->points_[i][0], chopped_cloud->points_[i][1], chopped_cloud->points_[i][2]));
             }
             semi_filtered_cloud = std::get<0>(chopped_cloud_prime->RemoveStatisticalOutliers(config[type_spring]["NB_NEIGHBOURS"].as<double>(), config[type_spring]["STD_RATIO"].as<double>(), false));
             filtered_cloud = std::get<0>(semi_filtered_cloud->RemoveStatisticalOutliers(config[type_spring]["NB_NEIGHBOURS_2"].as<double>(), config[type_spring]["STD_RATIO_2"].as<double>(), false));
-            open3d::visualization::DrawGeometries({filtered_cloud}, "Point Cloud Visualization");
+            if(config["VIEW_PARAMS"]["FILTERED_CLOUD"].as<bool>())
+                open3d::visualization::DrawGeometries({filtered_cloud}, "FILTERED_CLOUD");
+            
             clusters = clusterization_(filtered_cloud,config[type_spring]["CLUSTERIZATION_EPS"].as<double>(),config[type_spring]["CLUSTERIZAION_MIN_POINTS"].as<double>(),config[type_spring]["CLUSTER_DELETE_THRESHOLD"].as<double>(),config[type_spring]["LENGTH_LIM"].as<double>());
-            // open3d::visualization::DrawGeometries({clusters[0]}, "Point Cloud Visualization");
             auto cloud11 = std::make_shared<open3d::geometry::PointCloud>();
             for (auto cluster : clusters) {
                 for (int j = 0; j < cluster->points_.size(); j++) {
