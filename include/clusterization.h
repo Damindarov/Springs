@@ -10,5 +10,7 @@
 #include <vector>
 
 std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusterization(std::shared_ptr<open3d::geometry::PointCloud>);
+std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusterization_(std::shared_ptr<open3d::geometry::PointCloud>, double, double, double, double);
+std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusterization_ang(std::shared_ptr<open3d::geometry::PointCloud>);
 
 #endif //SPRINGS_CLUSTERIZATION_H

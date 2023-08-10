@@ -7,4 +7,9 @@
 #ifndef SPRINGS_CHOPPING_H
 #define SPRINGS_CHOPPING_H
 
+#include "open3d/Open3D.h"
+
+
+std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping(std::shared_ptr<open3d::geometry::PointCloud>, bool);
+std::shared_ptr<open3d::geometry::PointCloud> adaptive_chopping_(std::shared_ptr<open3d::geometry::PointCloud>, bool,double,double,double);
 #endif //SPRINGS_CHOPPING_H

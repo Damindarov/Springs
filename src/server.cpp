@@ -1,9 +1,27 @@
 #include "server.h"
+#include <iostream>
 
-extern bool terminateThread ;
+extern bool terminateThread;
 extern char recvbuf[1024];
-int rcvd;
+extern int rcvd;
+extern int iSendResult;
+extern SOCKET ListenSocket;
+extern SOCKET ClientSocket;
+extern int station_server;
+struct msg
+{
+    int station_server;
+    int command;
+    std::string spring_type;
+    double x;
+    double y;
+    double z;
+    double phi;
+    double theta;
+    double psi;
+};
 
+extern msg mymsg;
 extern std::mutex mtx;
 
 int server()
@@ -13,14 +31,10 @@ int server()
     {
         WSADATA wsaData;
 
-        SOCKET ListenSocket = INVALID_SOCKET;
-        SOCKET ClientSocket = INVALID_SOCKET;
-
         struct addrinfo *result = NULL;
         struct addrinfo hints;
-        int iResult;
-        int iSendResult;
 
+        int iResult;
         int recvbuflen = 1024;
 
         // Initialize Winsock
@@ -94,25 +108,24 @@ int server()
         // Receive until the peer shuts down the connection
         do
         {
-            mtx.lock(); // used to prevent access from other threads while changing its value
-            rcvd = recv(ClientSocket, recvbuf, recvbuflen, 0);
-            mtx.unlock();
+            // mtx.lock(); // used to prevent access from other threads while changing its value
+            rcvd = recv(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
+            std::cout << "command " << mymsg.command 
+            << "  status  " << mymsg.station_server << "  spring type  "<<mymsg.spring_type<< std::endl;
+            // mtx.unlock();
             if (rcvd > 0)
             {
+                mymsg.station_server = station_server;
                 printf("Bytes received: %d\n", rcvd);
-
-                // Echo the buffer back to the sender
-                mtx.lock();
-                iSendResult = send(ClientSocket, recvbuf, rcvd, 0);
-                mtx.unlock();
+                iSendResult = send(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
                 if (iSendResult == SOCKET_ERROR)
                 {
                     printf("send failed with error: %d\n", WSAGetLastError());
                     closesocket(ClientSocket);
                     WSACleanup();
-                    return 1;
                 }
                 printf("Bytes sent: %d\n", iSendResult);
+                // mtx.unlock();
             }
             else if (rcvd == 0)
                 printf("Connection closing...\n");
@@ -123,7 +136,6 @@ int server()
                 WSACleanup();
                 return 1;
             }
-
         } while (rcvd > 0);
 
         // shutdown the connection since we're done

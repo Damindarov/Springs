@@ -17,9 +17,9 @@ Eigen::Matrix4d getTransformationMatrix(float angle)
 
     Eigen::Matrix4d transformation;
     transformation << cos(angle), -sin(angle), 0, 0,
-        sin(angle), cos(angle), 0, 0,
-        0, 0, 1, 0,
-        0, 0, 0, 1;
+                      sin(angle), cos(angle), 0, 0,
+                      0, 0, 1, 0,
+                      0, 0, 0, 1;
 
     return transformation;
 }

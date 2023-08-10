@@ -31,7 +31,7 @@ include_directories(include)
 # add_executable(Springs)
 # target_sources(Springs PRIVATE main.cpp)
 
-add_executable(Springs main_ply_load.cpp
+add_executable(Springs main_server.cpp
         include/filtration.h
         include/clusterization.h
         include/spring_recognition.h
