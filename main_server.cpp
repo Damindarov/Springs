@@ -11,7 +11,6 @@
 #include "clusterization.h"
 #include "spring_recognition.h"
 #include "yaml-cpp/yaml.h"
-// #pragma comment(lib, "ws2_32.lib")
 bool terminateThread = false;
 bool flag = true;
 
@@ -54,8 +53,7 @@ int main()
     std::thread serverThread(server);
     serverThread.detach();
     std::string recvd_str;
-    bool position_now = false; // variable for keeping firection of nex scan
-    // int station_server = 0;
+    bool position_now = false;
     bool station = false;
     bool first_run = true;
 
@@ -71,13 +69,6 @@ int main()
     while (true)
     {
         cout<<"external comand"<<mymsg.command<<endl;
-
-        // Sleep(5000);
-        // mtx.lock();
-        // recvd_str = recvbuf;
-        // mtx.unlock();
-        // std::cout <<"Type operation: "<<recvd_str << "\n";
-
         auto chopped_cloud = std::make_shared<open3d::geometry::PointCloud>();
         auto chopped_cloud_prime = std::make_shared<open3d::geometry::PointCloud>();
         auto semi_filtered_cloud = std::make_shared<open3d::geometry::PointCloud>();
@@ -91,8 +82,6 @@ int main()
         if (station_server == 7 || station_server == 8){
             cout << "change_station, remove error"<<endl;
         }
-        // cout << "AAAAAA"
-        //      << " " << mymsg.command << endl;
         if (mymsg.command == 2 && station_server != 7 && station_server != 8)
         {
             if (station_server == 7)
@@ -196,47 +185,6 @@ int main()
                     mymsg.psi = std::get<1>(tf).eulerAngles(0,1,2)[2];
                     station_server = 5;
                 }
-
-
-                // int springs = 1;
-                // cout<<"CLUSTERSIZE"<<clusters.size()<<endl;
-                // for (auto cluster : clusters)
-                // {
-                    
-                //     std::cout << "Spring " << springs++ << std::endl;
-                //     auto tf = getTransformation(cluster);
-                //     std::cout << "Coordinates:\n"
-                //               << std::get<0>(tf) << std::endl;
-                //     std::cout << "Rotational matrix:\n"
-                //               << std::get<1>(tf) << std::endl;
-                //     std::cout << "Euler angles:\n"
-                //               << std::get<1>(tf).eulerAngles(0, 1, 2) << std::endl;
-                //     std::cout << std::endl;
-                    // flag = true;
-                    // if (rcvd > 0 && flag)
-                    // {
-                    //     mymsg.command = 5;
-                    //     mymsg.x = 0;     // get<0>(tf);
-                    //     mymsg.y = 0;     // get<0>(tf)];
-                    //     mymsg.z = 0;     // get<0>(tf)[2];
-                    //     mymsg.phi = 0;   // get<1>(tf).eulerAngles(0);
-                    //     mymsg.theta = 0; // get<1>(tf).eulerAngles(1);
-                    //     mymsg.psi = 0;   // get<1>(tf).eulerAngles(2);
-
-                    //     iSendResult = send(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
-                    //     if (iSendResult == SOCKET_ERROR)
-                    //     {
-                    //         printf("send failed with error: %d\n", WSAGetLastError());
-                    //         closesocket(ClientSocket);
-                    //         WSACleanup();
-                    //     }
-                    //     printf("Bytes sent: %d\n", iSendResult);
-                    //     // mtx.unlock();
-                    // }
-                    // flag = false;
-
-                    // v.pushBack(cluster);
-                // }
                 std::vector<std::shared_ptr<const open3d::geometry::Geometry>> v;
                 for (auto p : clusters)
                 {
@@ -249,16 +197,12 @@ int main()
                 if (clusters.size() == 0)
                 {
                     cout << "Frame can be empty" << endl;
-                    // filtered_cloud
                     double mean = 0;
                     auto cloud_frame_mean_filter = std::make_shared<open3d::geometry::PointCloud>();
-
-                    // open3d::visualization::DrawGeometries({semi_filtered_cloud1}, "semi_filtered_cloud1");
 
                     for (int i = 0; i < size(semi_filtered_cloud1->points_); i++)
                     {
                         mean = mean + semi_filtered_cloud1->points_[i][2];
-                        // cout<<semi_filtered_cloud1->points_[i][2]<<endl;
                     }
                     mean = mean / size(semi_filtered_cloud1->points_) + config["MEANING_OFFSET"].as<double>();
                     for (int i = 0; i < size(semi_filtered_cloud1->points_); i++)
@@ -277,7 +221,6 @@ int main()
                     int number_of_clusters = unique_labels.size();
 
                     std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusters_points_color;
-                    // std::vector<std::shared_ptr<open3d::geometry::PointCloud>> clusters;
                     for (int i = 0; i < number_of_clusters; i++)
                     {
 
@@ -298,7 +241,6 @@ int main()
                         }
                         clusters_points_color.push_back(cluster);
                     }
-
                     auto cloud1 = std::make_shared<open3d::geometry::PointCloud>();
                     for (auto cluster : clusters_points_color)
                     {
@@ -310,10 +252,7 @@ int main()
                     if(config["VIEW_PARAMS"]["ANG_SPRINGS"].as<bool>())
                         open3d::visualization::DrawGeometries({cloud1}, "ANG_SPRINGS");
 
-                    // open3d::visualization::DrawGeometries({clusters_points_color}, "clusters_points_color");
-
                     auto good_clusters_lines = std::vector<std::shared_ptr<open3d::geometry::PointCloud>>();
-
                     for (int i = 0; i < clusters_points_color.size(); i++)
                     {
                         auto bb_max_b = clusters_points_color.at(i)->GetAxisAlignedBoundingBox().GetMaxBound();
@@ -348,106 +287,20 @@ int main()
                         }
                     }
                     open3d::visualization::DrawGeometries({cloud1}, "Point Cloud Visualization");
-
-                    // std::cout<<mean<<" "<<good_clusters_lines.size()<<std::endl;
-                    // auto t2 = high_resolution_clock::now();
-                    // auto duration = duration_cast<milliseconds>(t2 - t1);
-                    // std::cout << "Full detection loop" << duration.count() << "\n";
-                    // open3d::visualization::DrawGeometries({cloud_frame_mean_filter}, "After meaning center Visualization");
                 }
-
-                //     std::cout << "Cluster size = " << clusters.size() << std::endl;
-                //     auto filtered_cloud1 = std::get<0>(cloud->RemoveRadiusOutliers(20, 2.8, false));
-                //     //auto filtered_cloud1 = filtration_ang(cloud);
-                //     //TODO: adaptive choping depending on the number of clusters
-                //     auto chopped_point_cloud1 = adaptive_chopping(filtered_cloud1, ang_first_run);
-                //     auto clusters1 = clusterization(chopped_point_cloud1);
-
-                //     if(clusters1.size() == 0){
-                //         cout<<"Maybe frame is empty"<<endl;
-                //         double mean = 0;
-                //         for(int i = 0; i < chopped_point_cloud1.points_(); i++){
-                //             mean += chopped_point_cloud1.points_()[2];
-                //         }
-                //         mean = mean / chopped_point_cloud1->points_.size();
-                //         auto cloud_frame = std::make_shared<open3d::geometry::PointCloud>();
-
-                //         for(int i = 0; i < chopped_point_cloud1.points_(); i++){
-                //             cloud_frame->points_.push_back(Eigen::Vector3d(cloud_frame->points_[i][0], cloud_frame->points_[i][1], cloud_frame->points_[i][2]);
-                //         }
-
-                //     }
             }
             else
             {
                 cout<<"CLUSTERSIZE"<<clusters.size()<<endl;
                 int springs = 1;
-                // for (auto cluster : clusters)
-                // {
-                    
-                //     std::cout << "Spring " << springs++ << std::endl;
-                //     auto tf = getTransformation(cluster);
-                //     std::cout << "Coordinates:\n"
-                //               << std::get<0>(tf) << std::endl;
-                //     std::cout << "Rotational matrix:\n"
-                //               << std::get<1>(tf) << std::endl;
-                //     std::cout << "Euler angles:\n"
-                //               << std::get<1>(tf).eulerAngles(0, 1, 2) << std::endl;
-                //     std::cout << std::endl;
-                //     flag = true;
-                //     if (rcvd > 0 && flag)
-                //     {
-                //         mymsg.command = 5;
-                //         mymsg.x = 0;     // get<0>(tf);
-                //         mymsg.y = 0;     // get<0>(tf)];
-                //         mymsg.z = 0;     // get<0>(tf)[2];
-                //         mymsg.phi = 0;   // get<1>(tf).eulerAngles(0);
-                //         mymsg.theta = 0; // get<1>(tf).eulerAngles(1);
-                //         mymsg.psi = 0;   // get<1>(tf).eulerAngles(2);
-
-                //         iSendResult = send(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
-                //         if (iSendResult == SOCKET_ERROR)
-                //         {
-                //             printf("send failed with error: %d\n", WSAGetLastError());
-                //             closesocket(ClientSocket);
-                //             WSACleanup();
-                //         }
-                //         printf("Bytes sent: %d\n", iSendResult);
-                //         // mtx.unlock();
-                //     }
-                //     flag = false;
-
-                //     // v.pushBack(cluster);
-                // }
                 station_server = 5;
-                // recvbuf[2] = '0';
             }
-
-            // terminateThread = true;
-            // break;
         }
         if (recvd_str[2] == '5')
         {
             terminateThread = true;
             break;
         }
-
-        // if(rcvd>0)
-        // {
-        //     mymsg.command = 56;
-        //     iSendResult = send(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
-        //     if (iSendResult == SOCKET_ERROR)
-        //     {
-        //         printf("send failed with error: %d\n", WSAGetLastError());
-        //         closesocket(ClientSocket);
-        //         WSACleanup();
-        //     }
-        //     printf("Bytes sent: %d\n", iSendResult);
-        //     // mtx.unlock();}
-        // }
-    }
-
-    // printMessage("Server_test");
 
     return 0;
 }
