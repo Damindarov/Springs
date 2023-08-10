@@ -102,28 +102,11 @@ int main()
             station_server = 3;
             mymsg.command = 0;
             YAML::Node config = YAML::LoadFile("springs_params_.yaml");
-            // if (config["CORE_PARAMS"]) {
-            // auto tr = config["CORE_PARAMS"];
-            // std::cout << "Last logged in: " << config["CORE_PARAMS"]["RIGHT_Y"] << "\n";
-            // }
-            // std::cout << "Last logged in: " << std::endl;
-            // mymsg.command = 56;
-            // iSendResult = send(ClientSocket, (char *)&mymsg, sizeof(msg), 0);
-            // if (iSendResult == SOCKET_ERROR)
-            // {
-            //     printf("send failed with error: %d\n", WSAGetLastError());
-            //     closesocket(ClientSocket);
-            //     WSACleanup();
-            // }
-            // break;
-            while (!station)
-            {
-                if (!position_now)
-                {
+            while (!station) {
+                if (!position_now){
                     station = scan(1.0, 1.0, 0.0, 3400.0, 3400.0);
                 }
-                else
-                {
+                else{
                     station = scan(1.0, 1.0, 3400.0, 0.0, 0.0);
                 }
             }
@@ -133,7 +116,6 @@ int main()
             station = !station;
             station_server = 9;
             command = 0;
-            // write typeoperation = 0, recvd_str[2] = 0
             auto t1 = high_resolution_clock::now();
             PointCloud PT;
             PT = get_point_cloud();
@@ -142,15 +124,11 @@ int main()
                 cloud->points_.push_back(Eigen::Vector3d(PT.data[i].x, PT.data[i].y, PT.data[i].z));
             }
 
-            // if (open3d::io::WritePointCloud("point_cloud.ply", *cloud)) {
-            //     std::cout << "Successfully wrote the point cloud file." << std::endl;
-            // } else {
-            //     std::cout << "Failed to write the point cloud file." << std::endl;
-            //     return 1;
-            // }
-
             chopped_cloud = adaptive_chopping_(cloud, first_run, config["CHOPPING_PARAMS"]["TOP_HEIGHT"].as<double>(), config["CHOPPING_PARAMS"]["BASE_HEIGHT"].as<double>(),config["CHOPPING_PARAMS"]["CUT_WIDTH"].as<double>());
-            open3d::visualization::DrawGeometries({chopped_cloud}, "Chopped Visualization");
+            
+            if(config["VIEW_PARAMS"]["CHOPPING"].as<bool>())
+                open3d::visualization::DrawGeometries({chopped_cloud}, "Chopped Visualization");
+            
             for (int i = 0; i < chopped_cloud->points_.size(); ++i)
             {
                 chopped_cloud_prime->points_.push_back(Eigen::Vector3d(-chopped_cloud->points_[i][0] + config["CALIBRATION_PARAMS"]["DX"].as<double>(), chopped_cloud->points_[i][1] + config["CALIBRATION_PARAMS"]["DY"].as<double>(), -chopped_cloud->points_[i][2] + config["CALIBRATION_PARAMS"]["DZ"].as<double>()));
@@ -192,15 +170,19 @@ int main()
                 mymsg.psi = std::get<1>(tf).eulerAngles(0,1,2)[2];
                 station_server = 5;
             }
-
-            open3d::visualization::DrawGeometries({cloud11}, "Point Cloud Visualization");
+            if(config["VIEW_PARAMS"]["CLUSTERS"].as<bool>())
+                open3d::visualization::DrawGeometries({cloud11}, "Clusters");
             if (clusters.size() == 0)
             {
                 cout << "Try to find angles in frame" << endl;
                 auto semi_filtered_cloud1 = std::get<0>(chopped_cloud_prime->RemoveStatisticalOutliers(config[type_spring]["NB_NEIGHBOURS"].as<double>(), config[type_spring]["STD_RATIO"].as<double>(), false));
-                open3d::visualization::DrawGeometries({semi_filtered_cloud}, "1_level filter");
+                if(config["VIEW_PARAMS"]["F_FILTER"].as<bool>())
+                    open3d::visualization::DrawGeometries({semi_filtered_cloud}, "F_FILTER");
+                
                 semi_filtered_cloud = std::get<0>(semi_filtered_cloud1->RemoveStatisticalOutliers(config[type_spring]["NB_NEIGHBOURS_ANG"].as<double>(), config[type_spring]["STD_RATIO_ANG"].as<double>(), false));
-                open3d::visualization::DrawGeometries({semi_filtered_cloud}, "Point Cloud Visualization");
+                if(config["VIEW_PARAMS"]["S_FILTER"].as<bool>())
+                    open3d::visualization::DrawGeometries({semi_filtered_cloud}, "S_FILTER");
+                
                 clusters = clusterization_(semi_filtered_cloud,config[type_spring]["CLUSTERIZATION_EPS"].as<double>(),config[type_spring]["CLUSTERIZAION_MIN_POINTS"].as<double>(),config[type_spring]["CLUSTER_DELETE_THRESHOLD"].as<double>(),config[type_spring]["LENGTH_LIM"].as<double>());
 
 
@@ -261,7 +243,8 @@ int main()
                     v.push_back(p);
                 }
                 const auto cv = v;
-                open3d::visualization::DrawGeometries(cv, "ANGLES");
+                if(config["VIEW_PARAMS"]["HOR_SPRINGS"].as<bool>())
+                    open3d::visualization::DrawGeometries(cv, "HOR_SPRINGS");
 
                 if (clusters.size() == 0)
                 {
@@ -270,7 +253,7 @@ int main()
                     double mean = 0;
                     auto cloud_frame_mean_filter = std::make_shared<open3d::geometry::PointCloud>();
 
-                    open3d::visualization::DrawGeometries({semi_filtered_cloud1}, "semi_filtered_cloud1");
+                    // open3d::visualization::DrawGeometries({semi_filtered_cloud1}, "semi_filtered_cloud1");
 
                     for (int i = 0; i < size(semi_filtered_cloud1->points_); i++)
                     {
@@ -285,7 +268,8 @@ int main()
                             cloud_frame_mean_filter->points_.push_back(Eigen::Vector3d(semi_filtered_cloud1->points_[i][0], semi_filtered_cloud1->points_[i][1], semi_filtered_cloud1->points_[i][2]));
                         }
                     }
-                    open3d::visualization::DrawGeometries({cloud_frame_mean_filter}, "cloud_frame_mean_filter");
+                    if(config["VIEW_PARAMS"]["MEAN_CUTTER"].as<bool>())
+                        open3d::visualization::DrawGeometries({cloud_frame_mean_filter}, "MEAN_CUTTER");
 
                     auto labels = cloud_frame_mean_filter->ClusterDBSCAN(config[type_spring]["LAST_STEP_EPS"].as<double>(), config[type_spring]["LAST_STEP_MIN_P"].as<double>());
 
@@ -323,7 +307,8 @@ int main()
                             cloud1->points_.push_back(Eigen::Vector3d(cluster->points_[j][0], cluster->points_[j][1], cluster->points_[j][2]));
                         }
                     }
-                    open3d::visualization::DrawGeometries({cloud1}, "cloud1");
+                    if(config["VIEW_PARAMS"]["ANG_SPRINGS"].as<bool>())
+                        open3d::visualization::DrawGeometries({cloud1}, "ANG_SPRINGS");
 
                     // open3d::visualization::DrawGeometries({clusters_points_color}, "clusters_points_color");
 
